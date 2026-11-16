@@ -1,4 +1,4 @@
-package modelo;
+package com.example.logitrack.modelo;
 
 import jakarta.persistence.*;
 
