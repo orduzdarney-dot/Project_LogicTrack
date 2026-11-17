@@ -17,7 +17,7 @@ public class MovimientoService {
     private MovimientoRepository repository;
 
     @Autowired
-    private ProductoRepository productoRepository;
+    private ProductoRepository productoRepository; // Necesitamos esto para buscar el producto real
 
     public List<Movimiento> obtenerTodos() {
         return repository.findAll();
@@ -28,21 +28,32 @@ public class MovimientoService {
     }
 
     public Movimiento registrarMovimiento(Movimiento movimiento) {
-        // Lógica de negocio: actualizar el stock del producto
-        Producto producto = movimiento.getProducto();
+        // PASO 1: Obtener el ID del producto que viene en el JSON
+        Long productoId = movimiento.getProducto().getId();
+
+        // PASO 2: Buscar el producto REAL en la base de datos
+        Producto productoReal = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+
+        // PASO 3: Modificar el stock del producto REAL
+        int stockActual = productoReal.getStock() != null ? productoReal.getStock() : 0; // Seguridad por si es null
 
         if (movimiento.getTipo() == TipoMovimiento.ENTRADA) {
-            producto.setStock(producto.getStock() + movimiento.getCantidad());
+            productoReal.setStock(stockActual + movimiento.getCantidad());
+
         } else if (movimiento.getTipo() == TipoMovimiento.SALIDA) {
-            if (producto.getStock() < movimiento.getCantidad()) {
-                throw new RuntimeException("No hay suficiente stock");
+            if (stockActual < movimiento.getCantidad()) {
+                throw new RuntimeException("No hay suficiente stock. Stock actual: " + stockActual);
             }
-            producto.setStock(producto.getStock() - movimiento.getCantidad());
+            productoReal.setStock(stockActual - movimiento.getCantidad());
         }
-        // TRANSFERENCIA no cambia el stock total, solo mueve entre bodegas
+        // Si es TRANSFERENCIA, el stock total no cambia, solo cambia de bodega.
 
-        productoRepository.save(producto);
+        // PASO 4: Guardar el producto actualizado en la base de datos
+        productoRepository.save(productoReal);
 
+        // PASO 5: Asignar el producto real al movimiento y guardar el movimiento
+        movimiento.setProducto(productoReal);
         return repository.save(movimiento);
     }
 

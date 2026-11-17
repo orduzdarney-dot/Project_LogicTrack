@@ -35,9 +35,9 @@ public class Usuario {
     private String correo;
 
 
-    @Column(nullable = false,length = 50)
+    @Column(nullable = false,length = 100)
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 5, max = 20, message = "la contraseña debe contener entre 5 y 20 caracteres")
+    @Size(min = 5, max = 100, message = "la contraseña debe contener entre 5 y 100 caracteres")
     private String password;
 
     @Enumerated(EnumType.STRING)

@@ -37,17 +37,14 @@ public class Auditoria {
     @Column(nullable = false)
     private Long idRegistroAfectado;
 
-    // Valores anteriores al cambio (en formato JSON o texto)
     @Column(columnDefinition = "TEXT")
     private String valoresAnteriores;
 
-    // Valores nuevos después del cambio (en formato JSON o texto)
     @Column(columnDefinition = "TEXT")
     private String valoresNuevos;
 
-    // Relación con Usuario (quién hizo el cambio)
-    @NotNull(message = "El usuario es obligatorio")
-    @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+    // ✅ CAMBIO: Guardamos el nombre como texto, no como relación.
+    // Esto preserva la integridad histórica aunque el usuario se borre después.
+    @Column(name = "nombre_usuario", length = 50)
+    private String nombreUsuario;
 }
