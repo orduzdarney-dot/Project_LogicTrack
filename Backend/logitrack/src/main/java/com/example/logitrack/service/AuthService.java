@@ -19,7 +19,7 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // ✅ BIEN: Pide la interfaz
+    private PasswordEncoder passwordEncoder;
 
     public String login(LoginRequest request) {
         // 1. Buscar al usuario por su correo

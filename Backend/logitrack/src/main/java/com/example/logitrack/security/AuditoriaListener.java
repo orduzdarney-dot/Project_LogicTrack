@@ -54,7 +54,7 @@ public class AuditoriaListener {
             auditoria.setFecha(LocalDateTime.now());
             auditoria.setEntidadAfectada(entity.getClass().getSimpleName());
             auditoria.setIdRegistroAfectado(idRegistro);
-            auditoria.setNombreUsuario(nombreUsuario); // ✅ Guardamos el string directamente
+            auditoria.setNombreUsuario(nombreUsuario); //  Guardamos el string directamente
 
             auditoriaRepo.save(auditoria);
 

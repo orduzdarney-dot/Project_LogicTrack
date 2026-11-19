@@ -63,8 +63,7 @@ public class MovimientoService {
             }
             productoReal.setStock(stockActual - movimiento.getCantidad());
         }
-        // NOTA: Para TRANSFERENCIA, si tu sistema maneja stock por bodega, aquí iría esa lógica.
-        // Si es stock global, no se modifica el total.
+
 
         productoRepository.save(productoReal);
 

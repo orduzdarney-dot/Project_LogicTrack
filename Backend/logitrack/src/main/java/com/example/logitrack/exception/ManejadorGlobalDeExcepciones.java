@@ -14,7 +14,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class ManejadorGlobalDeExcepciones {
 
-    // ⭐ 1. ESTE VA PRIMERO (el más específico: recursos no encontrados → 404)
+
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorResponse> manejarRecursoNoEncontrado(
             RecursoNoEncontradoException excepcion, WebRequest solicitud) {

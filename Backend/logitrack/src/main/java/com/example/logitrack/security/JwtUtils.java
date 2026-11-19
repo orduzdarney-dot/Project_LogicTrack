@@ -20,7 +20,7 @@ public class JwtUtils {
     // Tiempo de expiración del token (24 horas en milisegundos)
     private final long EXPIRATION_TIME = 86400000;
 
-    // 1. GENERAR EL TOKEN (La pulsera)
+    //  GENERAR EL TOKEN (La pulsera)
     public String generateToken(String username, String role) {
         return Jwts.builder()
                 .subject(username)
@@ -40,17 +40,17 @@ public class JwtUtils {
                 .getPayload();
     }
 
-    // 3. OBTENER EL USUARIO DEL TOKEN
+    //  OBTENER EL USUARIO DEL TOKEN
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
     }
 
-    // 4. OBTENER EL ROL DEL TOKEN
+    //  OBTENER EL ROL DEL TOKEN
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
     }
 
-    // 5. VALIDAR SI EL TOKEN ES VÁLIDO
+    //  VALIDAR SI EL TOKEN ES VÁLIDO
     public boolean isTokenValid(String token, String username) {
         return (username.equals(extractUsername(token)) && !isTokenExpired(token));
     }

@@ -9,7 +9,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
-@EntityListeners(AuditoriaListener.class) // <-- ¡ESTA LÍNEA ACTIVA LA MAGIA!
+@EntityListeners(AuditoriaListener.class)
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor

@@ -75,7 +75,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ Bean de CORS
+    // Bean de CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -89,7 +89,7 @@ public class SecurityConfig {
         return source;
     }
 
-    // ✅ Bean de PasswordEncoder
+    //  Bean de PasswordEncoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

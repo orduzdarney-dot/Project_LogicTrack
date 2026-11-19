@@ -14,7 +14,7 @@ public class SpringContextHolder implements ApplicationContextAware {
         context = applicationContext;
     }
 
-    // Método mágico para obtener cualquier Bean de Spring desde fuera (como un Listener de JPA)
+
     public static <T> T getBean(Class<T> beanClass) {
         return context.getBean(beanClass);
     }

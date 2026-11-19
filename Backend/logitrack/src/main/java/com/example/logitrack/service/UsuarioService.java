@@ -12,7 +12,7 @@ import java.util.List;
 public class UsuarioService {
 
     @Autowired
-    private UsuarioRepository repository; // ← ¡AQUÍ ESTABA EL FALTANTE!
+    private UsuarioRepository repository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -31,7 +31,7 @@ public class UsuarioService {
             throw new RuntimeException("El correo ya está registrado");
         }
 
-        // 2. 🔐 ENCRIPTAR LA CONTRASEÑA ANTES DE GUARDAR
+        // 2.  ENCRIPTAR LA CONTRASEÑA ANTES DE GUARDAR
         String passwordEncriptada = passwordEncoder.encode(usuario.getPassword());
         usuario.setPassword(passwordEncriptada);
 

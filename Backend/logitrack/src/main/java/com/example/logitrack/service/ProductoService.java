@@ -18,7 +18,7 @@ public class ProductoService {
         return repository.findAll();
     }
 
-    // ✅ AHORA LANZA LA EXCEPCIÓN EN LUGAR DE DEVOLVER NULL
+    //  LANZA LA EXCEPCIÓN EN LUGAR DE DEVOLVER NULL
     public Producto obtenerPorId(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + id));
@@ -29,7 +29,7 @@ public class ProductoService {
     }
 
     public void eliminar(Long id) {
-        // Opcional: validar que exista antes de borrar para lanzar la excepción también aquí
+
         if (!repository.existsById(id)) {
             throw new RecursoNoEncontradoException("Producto no encontrado con ID: " + id);
         }
