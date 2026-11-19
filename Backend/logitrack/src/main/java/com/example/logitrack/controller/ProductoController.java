@@ -20,13 +20,10 @@ public class ProductoController {
         return ResponseEntity.ok(service.obtenerTodos());
     }
 
+    //  EL CONTROLLER YA NO VALIDA NULL, SOLO DELEGA AL SERVICE
     @GetMapping("/{id}")
     public ResponseEntity<Producto> obtenerPorId(@PathVariable Long id) {
-        Producto producto = service.obtenerPorId(id);
-        if (producto == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(producto);
+        return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
     @PostMapping
@@ -35,22 +32,19 @@ public class ProductoController {
         return ResponseEntity.status(201).body(nuevo);
     }
 
+    // ✅ EL CONTROLLER YA NO VALIDA NULL, EL SERVICE LANZARÁ LA EXCEPCIÓN SI NO EXISTE
     @PutMapping("/{id}")
     public ResponseEntity<Producto> actualizar(@PathVariable Long id, @RequestBody Producto producto) {
-        Producto existente = service.obtenerPorId(id);
-        if (existente == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // Esto lanzará RecursoNoEncontradoException si no existe, y el Manejador Global lo atrapará
+        service.obtenerPorId(id);
         producto.setId(id);
         return ResponseEntity.ok(service.guardar(producto));
     }
 
+    // ✅ EL CONTROLLER YA NO VALIDA NULL, EL SERVICE LANZARÁ LA EXCEPCIÓN
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (service.obtenerPorId(id) == null) {
-            return ResponseEntity.notFound().build();
-        }
-        service.eliminar(id);
+        service.eliminar(id); // Esto lanzará la excepción si no existe
         return ResponseEntity.noContent().build();
     }
 

@@ -1,13 +1,15 @@
 package com.example.logitrack.service;
 
-import com.example.logitrack.modelo.Movimiento;
-import com.example.logitrack.modelo.Producto;
-import com.example.logitrack.modelo.TipoMovimiento;
+import com.example.logitrack.modelo.*;
 import com.example.logitrack.repository.MovimientoRepository;
 import com.example.logitrack.repository.ProductoRepository;
+import com.example.logitrack.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,7 +19,10 @@ public class MovimientoService {
     private MovimientoRepository repository;
 
     @Autowired
-    private ProductoRepository productoRepository; // Necesitamos esto para buscar el producto real
+    private ProductoRepository productoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public List<Movimiento> obtenerTodos() {
         return repository.findAll();
@@ -27,33 +32,43 @@ public class MovimientoService {
         return repository.findById(id).orElse(null);
     }
 
+    @Transactional
     public Movimiento registrarMovimiento(Movimiento movimiento) {
-        // PASO 1: Obtener el ID del producto que viene en el JSON
-        Long productoId = movimiento.getProducto().getId();
+        // 1. Validar que venga el producto con su ID
+        if (movimiento.getProducto() == null || movimiento.getProducto().getId() == null) {
+            throw new RuntimeException("El producto es obligatorio");
+        }
 
-        // PASO 2: Buscar el producto REAL en la base de datos
-        Producto productoReal = productoRepository.findById(productoId)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + productoId));
+        Producto productoReal = productoRepository.findById(movimiento.getProducto().getId())
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + movimiento.getProducto().getId()));
 
-        // PASO 3: Modificar el stock del producto REAL
-        int stockActual = productoReal.getStock() != null ? productoReal.getStock() : 0; // Seguridad por si es null
+        // 2. Obtener el usuario AUTOMÁTICAMENTE desde el token JWT (Seguridad)
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuarioReal = usuarioRepository.findByNombre(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+
+        // 3. Asignar datos que el frontend no debe enviar
+        movimiento.setFecha(LocalDateTime.now());
+        movimiento.setUsuario(usuarioReal);
+        movimiento.setProducto(productoReal);
+
+        // 4. Lógica de Stock
+        int stockActual = productoReal.getStock() != null ? productoReal.getStock() : 0;
 
         if (movimiento.getTipo() == TipoMovimiento.ENTRADA) {
             productoReal.setStock(stockActual + movimiento.getCantidad());
-
         } else if (movimiento.getTipo() == TipoMovimiento.SALIDA) {
             if (stockActual < movimiento.getCantidad()) {
                 throw new RuntimeException("No hay suficiente stock. Stock actual: " + stockActual);
             }
             productoReal.setStock(stockActual - movimiento.getCantidad());
         }
-        // Si es TRANSFERENCIA, el stock total no cambia, solo cambia de bodega.
+        // NOTA: Para TRANSFERENCIA, si tu sistema maneja stock por bodega, aquí iría esa lógica.
+        // Si es stock global, no se modifica el total.
 
-        // PASO 4: Guardar el producto actualizado en la base de datos
         productoRepository.save(productoReal);
 
-        // PASO 5: Asignar el producto real al movimiento y guardar el movimiento
-        movimiento.setProducto(productoReal);
+        // 5. Guardar el movimiento
         return repository.save(movimiento);
     }
 

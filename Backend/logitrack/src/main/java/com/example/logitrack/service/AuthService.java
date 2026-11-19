@@ -6,6 +6,7 @@ import com.example.logitrack.repository.UsuarioRepository;
 import com.example.logitrack.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,7 +19,7 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder; // La máquina de encriptar
+    private PasswordEncoder passwordEncoder; // ✅ BIEN: Pide la interfaz
 
     public String login(LoginRequest request) {
         // 1. Buscar al usuario por su correo

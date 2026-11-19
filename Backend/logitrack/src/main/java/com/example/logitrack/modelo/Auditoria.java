@@ -33,7 +33,7 @@ public class Auditoria {
     @Column(nullable = false, length = 50)
     private String entidadAfectada;
 
-    @NotNull(message = "El ID del registro es obligatorio")
+    @NotNull(message = "el ID del registro es obligatorio")
     @Column(nullable = false)
     private Long idRegistroAfectado;
 
@@ -43,7 +43,7 @@ public class Auditoria {
     @Column(columnDefinition = "TEXT")
     private String valoresNuevos;
 
-    // ✅ CAMBIO: Guardamos el nombre como texto, no como relación.
+    //  CAMBIO: Guardamos el nombre como texto, no como relación.
     // Esto preserva la integridad histórica aunque el usuario se borre después.
     @Column(name = "nombre_usuario", length = 50)
     private String nombreUsuario;
