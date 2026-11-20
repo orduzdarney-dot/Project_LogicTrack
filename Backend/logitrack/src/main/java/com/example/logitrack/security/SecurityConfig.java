@@ -43,6 +43,9 @@ public class SecurityConfig {
                         // 1. Rutas públicas
                         .requestMatchers("/auth/**").permitAll()
 
+                        // 1.1 Archivos del frontend (páginas, estilos y scripts)
+                        .requestMatchers("/", "/index.html", "/login.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
+
                         // 2. Swagger
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()

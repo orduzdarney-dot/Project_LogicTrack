@@ -39,7 +39,7 @@ function renderizarTablaBodegas(bodegas) {
             <tr>
                 <td>${bodega.id}</td>
                 <td><strong>${bodega.nombre}</strong></td>
-                <td>📍 ${bodega.ubicacion || 'Sin ubicación'}</td>
+                <td> ${bodega.ubicacion || 'Sin ubicación'}</td>
                 <td>${bodega.capacidad || 0} unidades</td>
                 <td>${bodega.encargado || '-'}</td>
                 <td>${acciones}</td>

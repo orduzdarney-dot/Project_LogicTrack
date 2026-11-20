@@ -160,3 +160,12 @@ body { background-color: var(--bg-body); color: var(--text-main); display: flex;
 .badge-danger { background: #fee2e2; color: #991b1b; }
 .badge-info { background: #dbeafe; color: #1e40af; }
 .badge-warning { background: #fef3c7; color: #92400e; }
+
+.menu-btn { display: none; background: none; border: none; font-size: 1.6rem; cursor: pointer; }
+
+@media (max-width: 768px) {
+    .menu-btn { display: block; }
+    .topbar { padding: 0.75rem 1rem; }
+    .content-area { padding: 1rem; }
+    #user-name { display: none; }
+}
