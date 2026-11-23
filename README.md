@@ -1,102 +1,205 @@
 # 📦 LogiTrack — Sistema de Gestión y Auditoría de Bodegas
  
-LogiTrack es un sistema para administrar bodegas, productos y movimientos de inventario (entradas, salidas y transferencias), con **trazabilidad completa** de los cambios realizados por cada usuario. Está compuesto por un **backend REST en Spring Boot** protegido con **JWT** y un **frontend web** en HTML, CSS y JavaScript puro.
+Backend REST en **Spring Boot** para **LogiTrack S.A.**, empresa que administra varias bodegas en distintas ciudades. Centraliza el control de productos, bodegas y movimientos de inventario (entradas, salidas y transferencias), registra automáticamente los cambios en una auditoría y protege la información con **autenticación JWT** y control de acceso por roles. Incluye un frontend básico en HTML/CSS/JS para probar el login y las consultas principales.
  
 ---
  
-## Tabla de contenido
+## 📑 Contenido
  
-1. [Descripción del proyecto](#descripción-del-proyecto)
-2. [Tecnologías](#tecnologías)
-3. [Estructura del proyecto](#estructura-del-proyecto)
-4. [Requisitos previos](#requisitos-previos)
-5. [Instalación y ejecución](#instalación-y-ejecución)
-6. [Usuarios de prueba](#usuarios-de-prueba)
-7. [Autenticación y roles](#autenticación-y-roles)
-8. [Endpoints de la API](#endpoints-de-la-api)
-9. [Ejemplos de uso](#ejemplos-de-uso)
-10. [Manejo de errores](#manejo-de-errores)
-11. [Auditoría automática](#auditoría-automática)
-12. [Documentación Swagger](#documentación-swagger)
-13. [Frontend](#frontend)
-14. [Base de datos](#base-de-datos)
+1. [Objetivo](#-objetivo)
+2. [Funcionalidades](#-funcionalidades)
+3. [Tecnologías](#-tecnologías)
+4. [Arquitectura](#-arquitectura)
+5. [Diagrama de clases](#-diagrama-de-clases)
+6. [Estructura del proyecto](#-estructura-del-proyecto)
+7. [Instalación y ejecución](#-instalación-y-ejecución)
+8. [Usuarios de prueba](#-usuarios-de-prueba)
+9. [Seguridad y JWT](#-seguridad-y-jwt)
+10. [Endpoints](#-endpoints)
+11. [Ejemplos de uso](#-ejemplos-de-uso)
+12. [Reglas de negocio](#-reglas-de-negocio)
+13. [Auditoría](#-auditoría)
+14. [Manejo de errores](#-manejo-de-errores)
+15. [Documentación Swagger y pruebas](#-documentación-swagger-y-pruebas)
+16. [Frontend](#-frontend)
+17. [Usarlo desde el celular](#-usarlo-desde-el-celular)
+18. [Limitaciones conocidas](#-limitaciones-conocidas)
 ---
  
-## Descripción del proyecto
+## 🎯 Objetivo
  
-LogiTrack S.A. administra varias bodegas distribuidas en distintas ciudades. Este sistema centraliza el control del inventario y reemplaza el manejo manual en hojas de cálculo, ofreciendo:
+Desarrollar un sistema de gestión y auditoría de bodegas que permita registrar transacciones de inventario y consultar un historial auditable de los cambios realizados por cada usuario, reemplazando el control manual en hojas de cálculo que no ofrecía trazabilidad ni control de accesos.
  
-- **Gestión de bodegas**: registro, consulta, actualización y eliminación.
-- **Gestión de productos**: CRUD completo, con consulta de productos de stock bajo.
-- **Movimientos de inventario**: registro de `ENTRADA`, `SALIDA` y `TRANSFERENCIA`, asociados automáticamente al usuario autenticado.
-- **Auditoría**: registro automático de operaciones `INSERT`, `UPDATE` y `DELETE`, con fecha, usuario y entidad afectada.
-- **Seguridad**: autenticación con Spring Security + JWT y control de acceso por rol (`ADMIN` / `EMPLEADO`).
-- **API documentada** con Swagger / OpenAPI 3.
-- **Panel web** para operar el sistema desde el navegador.
----
+## ✨ Funcionalidades
  
-## Tecnologías
+| Módulo | Qué permite |
+|---|---|
+| **Bodegas** | Registrar, consultar, actualizar y eliminar bodegas (id, nombre, ubicación, capacidad, encargado). |
+| **Productos** | CRUD completo (id, nombre, categoría, stock, precio) y consulta de productos con **stock bajo** (menos de 10 unidades). |
+| **Movimientos** | Registrar entradas, salidas y transferencias entre bodegas. Guarda fecha, tipo, cantidad, producto, bodega origen/destino y el usuario responsable (tomado del token). |
+| **Auditoría** | Registro automático de operaciones INSERT, UPDATE y DELETE mediante un *EntityListener* de JPA, con fecha, usuario y entidad afectada. |
+| **Seguridad** | Spring Security + JWT, contraseñas cifradas con BCrypt y roles `ADMIN` / `EMPLEADO`. |
+| **Usuarios** | Administración de usuarios del sistema y sus roles. |
+| **Errores y validaciones** | Manejo global con `@ControllerAdvice`, validaciones con Bean Validation y respuestas JSON uniformes. |
+| **Documentación** | API documentada con Swagger / OpenAPI 3 y soporte para probar endpoints protegidos con el token. |
+| **Frontend** | Panel web (login, dashboard, productos, bodegas, movimientos y auditoría). |
+ 
+## 🛠 Tecnologías
  
 | Capa | Tecnología |
-|------|-----------|
+|---|---|
 | Lenguaje | Java 21 |
-| Framework | Spring Boot 3.4.1 |
-| Seguridad | Spring Security + JWT (jjwt 0.12.3) |
-| Persistencia | Spring Data JPA / Hibernate |
+| Framework | Spring Boot 3.4.1 (Web, Data JPA, Validation, Security) |
 | Base de datos | MySQL 8 |
-| Validación | Jakarta Bean Validation |
+| Autenticación | JWT (JJWT 0.12.3) |
 | Documentación | springdoc-openapi 2.8.4 (Swagger UI) |
-| Utilidades | Lombok |
-| Servidor | Tomcat embebido (puerto 8080) |
-| Frontend | HTML5, CSS3, JavaScript (Fetch API) |
-| Build | Maven (incluye Maven Wrapper) |
+| Utilidades | Lombok, Maven |
+| Servidor | Tomcat embebido |
+| Frontend | HTML5, CSS3 y JavaScript (sin frameworks) |
  
----
+## 🏗 Arquitectura
  
-## Estructura del proyecto
+El backend sigue una **arquitectura en capas**:
  
-```
-Backend/logitrack/
-├── pom.xml
-└── src/main/
-    ├── java/com/example/logitrack/
-    │   ├── LogitrackApplication.java
-    │   ├── config/          → OpenApiConfig, SpringContextHolder
-    │   ├── controller/      → Auth, Bodega, Producto, Movimiento, Auditoria, Usuario
-    │   ├── dto/             → LoginRequest
-    │   ├── exception/       → ManejadorGlobalDeExcepciones, ErrorResponse, RecursoNoEncontradoException
-    │   ├── modelo/          → Bodega, Producto, Movimiento, Usuario, Auditoria + enums
-    │   ├── repository/      → Repositorios JPA
-    │   ├── security/        → SecurityConfig, JwtUtils, JwtAuthenticationFilter,
-    │   │                      CustomUserDetailsService, AuditoriaListener
-    │   └── service/         → Lógica de negocio
-    └── resources/
-        ├── application.properties
-        ├── schema.sql
-        └── data.sql
- 
-Frontend/
-├── login.html
-├── index.html
-├── css/   → login.css, styles.css
-└── js/    → config.js, api.js, auth.js, dashboard.js,
-             productos.js, bodegas.js, movimientos.js, auditoria.js
+```mermaid
+flowchart TD
+    C[Cliente: Frontend / Swagger / Postman] -->|HTTP + JWT| F[JwtAuthenticationFilter]
+    F --> SC[SecurityConfig: roles y rutas]
+    SC --> CT[Controller: recibe y responde JSON]
+    CT --> SV[Service: reglas de negocio]
+    SV --> RP[Repository: Spring Data JPA]
+    RP --> DB[(MySQL logitrack_db)]
+    RP -. PostPersist / PostUpdate / PreRemove .-> AL[AuditoriaListener]
+    AL --> DB
+    CT -. errores .-> EX[ManejadorGlobalDeExcepciones]
 ```
  
----
+| Capa | Paquete | Responsabilidad |
+|---|---|---|
+| Controller | `controller` | Expone los endpoints REST y la documentación Swagger. |
+| Service | `service` | Contiene la lógica de negocio (stock, usuario del movimiento, cifrado de contraseñas). |
+| Repository | `repository` | Acceso a datos con Spring Data JPA. |
+| Modelo | `modelo` | Entidades JPA, enums y validaciones. |
+| Security | `security` | Filtro JWT, generación y validación de tokens, reglas de acceso y listener de auditoría. |
+| Config | `config` | Configuración de OpenAPI/Swagger y utilidades de Spring. |
+| Exception | `exception` | Manejo global de errores y respuestas JSON personalizadas. |
  
-## Requisitos previos
+**Flujo de una petición:** el cliente envía el token → `JwtAuthenticationFilter` lo valida y carga el rol → `SecurityConfig` decide si la ruta está permitida → el controlador delega en el servicio → el repositorio accede a MySQL. Si algo falla, `ManejadorGlobalDeExcepciones` devuelve un JSON de error.
+ 
+## 🧩 Diagrama de clases
+ 
+```mermaid
+classDiagram
+    class Usuario {
+        Long id
+        String nombre
+        String correo
+        String password
+        Rol rol
+    }
+    class Producto {
+        Long id
+        String nombre
+        String categoria
+        Integer stock
+        BigDecimal precio
+    }
+    class Bodega {
+        Long id
+        String nombre
+        String ubicacion
+        Integer capacidad
+        String encargado
+    }
+    class Movimiento {
+        Long id
+        LocalDateTime fecha
+        TipoMovimiento tipo
+        Integer cantidad
+    }
+    class Auditoria {
+        Long id
+        TipoOperacion tipoOperacion
+        LocalDateTime fecha
+        String entidadAfectada
+        Long idRegistroAfectado
+        String valoresAnteriores
+        String valoresNuevos
+        String nombreUsuario
+    }
+    class Rol {
+        <<enumeration>>
+        ADMIN
+        EMPLEADO
+    }
+    class TipoMovimiento {
+        <<enumeration>>
+        ENTRADA
+        SALIDA
+        TRANSFERENCIA
+    }
+    class TipoOperacion {
+        <<enumeration>>
+        INSERT
+        UPDATE
+        DELETE
+    }
+    Usuario "1" --> "*" Movimiento : registra
+    Producto "1" --> "*" Movimiento : se mueve en
+    Bodega "0..1" --> "*" Movimiento : origen
+    Bodega "0..1" --> "*" Movimiento : destino
+    Usuario --> Rol
+    Movimiento --> TipoMovimiento
+    Auditoria --> TipoOperacion
+```
+ 
+**Base de datos (tablas):** `usuario`, `producto`, `bodega`, `movimiento` y `auditoria`. En `movimiento`, las claves foráneas a `usuario` y `producto` son obligatorias, y las de `bodega_origen` y `bodega_destino` son opcionales (una ENTRADA no tiene origen y una SALIDA no tiene destino). `auditoria` guarda el nombre del usuario como texto para conservar el historial aunque el usuario se elimine.
+ 
+## 📂 Estructura del proyecto
+ 
+```
+Backend/
+└── logitrack/
+    ├── pom.xml
+    └── src/main/
+        ├── java/com/example/logitrack/
+        │   ├── LogitrackApplication.java
+        │   ├── config/          # OpenApiConfig, SpringContextHolder
+        │   ├── controller/      # Auth, Producto, Bodega, Movimiento, Usuario, Auditoria
+        │   ├── dto/             # LoginRequest
+        │   ├── exception/       # ManejadorGlobalDeExcepciones, ErrorResponse, RecursoNoEncontradoException
+        │   ├── modelo/          # Usuario, Producto, Bodega, Movimiento, Auditoria + enums
+        │   ├── repository/      # Repositorios Spring Data JPA
+        │   ├── security/        # SecurityConfig, JwtUtils, JwtAuthenticationFilter,
+        │   │                    # CustomUserDetailsService, AuditoriaListener
+        │   └── service/         # Lógica de negocio
+        └── resources/
+            ├── application.properties
+            ├── schema.sql       # Estructura de la base de datos
+            ├── data.sql         # Datos iniciales de prueba
+            └── static/          # Frontend (HTML, CSS y JS), servido por Spring Boot
+                ├── index.html
+                ├── login.html
+                ├── css/
+                └── js/
+```
+ 
+## 🚀 Instalación y ejecución
+ 
+### Requisitos previos
  
 - **JDK 21**
 - **MySQL 8** en ejecución en `localhost:3306`
-- **Maven** (opcional, el proyecto incluye `mvnw` / `mvnw.cmd`)
-- Un navegador web moderno
-- (Opcional) Un servidor estático para el frontend, por ejemplo la extensión *Live Server* de VS Code o `python -m http.server`
----
+- **Maven** (o el wrapper incluido: `mvnw` / `mvnw.cmd`)
+- IntelliJ IDEA (opcional) y un navegador moderno
+### 1. Clonar el repositorio
  
-## Instalación y ejecución
+```bash
+git clone https://github.com/orduzdarney-dot/Project_LogicTrack.git
+cd Project_LogicTrack/Backend/logitrack
+```
  
-### 1. Configurar la base de datos
+### 2. Configurar la base de datos
  
 Edita `src/main/resources/application.properties` con tus credenciales de MySQL:
  
@@ -107,224 +210,193 @@ spring.datasource.password=1234
 server.port=8080
 ```
  
-La base `logitrack_db` se crea automáticamente. Al arrancar, Spring ejecuta `schema.sql` (estructura de tablas) y `data.sql` (datos iniciales).
+La base `logitrack_db` se crea sola si no existe. Al arrancar, Spring ejecuta `schema.sql` (crea las tablas) y `data.sql` (carga usuarios, bodegas y productos de prueba).
  
-> ⚠️ `schema.sql` elimina y recrea las tablas en cada arranque, por lo que los datos se reinician cada vez que se inicia el backend.
+### 3. Ejecutar
  
-### 2. Ejecutar el backend
+**Desde IntelliJ:** abre la clase `LogitrackApplication` y pulsa **Run ▶**.
  
-Desde la carpeta `Backend/logitrack`:
- 
-```bash
-# Linux / macOS
-./mvnw spring-boot:run
- 
-# Windows
-mvnw.cmd spring-boot:run
-```
- 
-También puedes generar el JAR y ejecutarlo:
+**Desde la terminal:**
  
 ```bash
-./mvnw clean package
-java -jar target/logitrack-0.0.1-SNAPSHOT.jar
+./mvnw spring-boot:run        # Linux / macOS / Git Bash
+mvnw.cmd spring-boot:run      # Windows (CMD o PowerShell)
 ```
  
-El backend queda disponible en **http://localhost:8080**.
+Cuando aparezca `Started LogitrackApplication`, la aplicación queda disponible en:
  
-### 3. Ejecutar el frontend
+| Recurso | URL |
+|---|---|
+| Frontend (login) | http://localhost:8080/login.html |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| OpenAPI (JSON) | http://localhost:8080/v3/api-docs |
  
-El frontend consume la API en `http://localhost:8080` (configurable en `Frontend/js/config.js`):
+> ⚠️ `schema.sql` elimina y recrea todas las tablas en cada arranque (`DROP TABLE IF EXISTS`). Los datos se reinician cada vez que se inicia la aplicación.
  
-```js
-const CONFIG = {
-    API_URL: "http://localhost:8080",
-    ...
-};
-```
+## 👤 Usuarios de prueba
  
-Sirve la carpeta `Frontend/` con cualquier servidor estático:
+Cargados desde `data.sql`. **La contraseña de todos es `12345`.**
  
-```bash
-cd Frontend
-python -m http.server 5500
-```
+| Nombre | Correo | Rol |
+|---|---|---|
+| admin1 | admin@logitrack.com | ADMIN |
+| juan_perez | empleado@logitrack.com | EMPLEADO |
+| maria_gomez | maria@logitrack.com | EMPLEADO |
  
-Luego abre **http://localhost:5500/login.html**.
+También se cargan 3 bodegas (Quito, Medellín y Loja) y 8 productos de ejemplo.
  
----
+## 🔐 Seguridad y JWT
  
-## Usuarios de prueba
+1. El usuario envía su **correo y contraseña** a `POST /auth/login`.
+2. El servidor verifica las credenciales (contraseña cifrada con BCrypt) y devuelve un **token JWT** válido por **24 horas**.
+3. El cliente envía el token en cada petición: `Authorization: Bearer <token>`.
+4. `JwtAuthenticationFilter` valida la firma y la expiración, y `SecurityConfig` aplica los permisos según el rol.
+### Ejemplo de token
  
-Cargados desde `data.sql`. La contraseña de todos es **`12345`**.
- 
-| Rol | Correo | Nombre de usuario |
-|-----|--------|-------------------|
-| ADMIN | `admin@logitrack.com` | `admin1` |
-| EMPLEADO | `empleado@logitrack.com` | `juan_perez` |
-| EMPLEADO | `maria@logitrack.com` | `maria_gomez` |
- 
----
- 
-## Autenticación y roles
- 
-El inicio de sesión se hace con **correo y contraseña** en `POST /auth/login`. La respuesta contiene un token JWT que debe enviarse en cada petición protegida:
+Un JWT tiene tres partes separadas por puntos: `encabezado.contenido.firma`.
  
 ```
-Authorization: Bearer <token>
+eyJhbGciOiJIUzUxMiJ9.<contenido>.<firma>
 ```
  
-- El token se firma con **HMAC-SHA** y tiene una vigencia de **24 horas**.
-- El payload incluye el nombre de usuario (`sub`), el rol (`role`), la fecha de emisión (`iat`) y la de expiración (`exp`).
-- La sesión es *stateless*: el servidor no guarda estado entre peticiones.
-### Permisos por rol
- 
-| Recurso | ADMIN | EMPLEADO |
-|---------|:-----:|:--------:|
-| `/auth/**`, Swagger | Público | Público |
-| `GET / POST / PUT` en `/bodegas`, `/productos`, `/usuarios` | ✅ | ✅ |
-| `GET / POST` en `/movimientos` | ✅ | ✅ |
-| `DELETE` en `/bodegas`, `/productos`, `/usuarios` | ✅ | ❌ |
-| `/auditorias/**` | ✅ | ❌ |
- 
----
- 
-## Endpoints de la API
- 
-### Autenticación
- 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/auth/login` | Inicia sesión y devuelve el token JWT |
- 
-### Bodegas
- 
-| Método | Ruta | Descripción | Rol |
-|--------|------|-------------|-----|
-| GET | `/bodegas` | Lista todas las bodegas | ADMIN, EMPLEADO |
-| GET | `/bodegas/{id}` | Consulta una bodega | ADMIN, EMPLEADO |
-| POST | `/bodegas` | Crea una bodega | ADMIN, EMPLEADO |
-| PUT | `/bodegas/{id}` | Actualiza una bodega | ADMIN, EMPLEADO |
-| DELETE | `/bodegas/{id}` | Elimina una bodega | ADMIN |
- 
-### Productos
- 
-| Método | Ruta | Descripción | Rol |
-|--------|------|-------------|-----|
-| GET | `/productos` | Lista todos los productos | ADMIN, EMPLEADO |
-| GET | `/productos/{id}` | Consulta un producto | ADMIN, EMPLEADO |
-| GET | `/productos/stock-bajo` | Productos con stock menor a 10 | ADMIN, EMPLEADO |
-| POST | `/productos` | Crea un producto | ADMIN, EMPLEADO |
-| PUT | `/productos/{id}` | Actualiza un producto | ADMIN, EMPLEADO |
-| DELETE | `/productos/{id}` | Elimina un producto | ADMIN |
- 
-### Movimientos
- 
-| Método | Ruta | Descripción | Rol |
-|--------|------|-------------|-----|
-| GET | `/movimientos` | Lista el historial de movimientos | ADMIN, EMPLEADO |
-| GET | `/movimientos/{id}` | Consulta un movimiento | ADMIN, EMPLEADO |
-| POST | `/movimientos` | Registra una entrada, salida o transferencia | ADMIN, EMPLEADO |
- 
-### Usuarios
- 
-| Método | Ruta | Descripción | Rol |
-|--------|------|-------------|-----|
-| GET | `/usuarios` | Lista los usuarios | ADMIN, EMPLEADO |
-| GET | `/usuarios/{id}` | Consulta un usuario | ADMIN, EMPLEADO |
-| POST | `/usuarios` | Crea un usuario (la contraseña se guarda cifrada con BCrypt) | ADMIN, EMPLEADO |
-| PUT | `/usuarios/{id}` | Actualiza un usuario | ADMIN, EMPLEADO |
-| DELETE | `/usuarios/{id}` | Elimina un usuario | ADMIN |
- 
-### Auditoría
- 
-| Método | Ruta | Descripción | Rol |
-|--------|------|-------------|-----|
-| GET | `/auditorias` | Lista todos los registros de auditoría | ADMIN |
-| GET | `/auditorias/{id}` | Consulta un registro de auditoría | ADMIN |
- 
----
- 
-## Ejemplos de uso
- 
-### Iniciar sesión
- 
-```bash
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"correo": "admin@logitrack.com", "password": "12345"}'
-```
- 
-Respuesta:
- 
-```json
-{
-  "token": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJhZG1pbjEiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NjMwMDAwMDAsImV4cCI6MTc2MzA4NjQwMH0.firma"
-}
-```
- 
-Payload decodificado del token:
+Contenido (payload) decodificado de un token de `admin1`:
  
 ```json
 {
   "sub": "admin1",
   "role": "ADMIN",
-  "iat": 1763000000,
-  "exp": 1763086400
+  "iat": 1795130000,
+  "exp": 1795216400
 }
 ```
  
-### Usar el token
+| Campo | Significado |
+|---|---|
+| `sub` | Nombre del usuario autenticado |
+| `role` | Rol del usuario (`ADMIN` o `EMPLEADO`) |
+| `iat` | Fecha de emisión (segundos Unix) |
+| `exp` | Fecha de expiración (24 horas después) |
+ 
+### Uso del token
  
 ```bash
+# 1. Obtener el token
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo":"admin@logitrack.com","password":"12345"}'
+ 
+# 2. Usarlo en un endpoint protegido
 curl http://localhost:8080/productos \
-  -H "Authorization: Bearer <token>"
+  -H "Authorization: Bearer TU_TOKEN"
 ```
  
-### Crear un producto
+### Permisos por rol
  
-```bash
-curl -X POST http://localhost:8080/productos \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "nombre": "Webcam HD",
-        "categoria": "Tecnología",
-        "stock": 20,
-        "precio": 49.90
-      }'
+| Recurso | ADMIN | EMPLEADO |
+|---|:---:|:---:|
+| `/auth/**` (login) | ✅ público | ✅ público |
+| Swagger y recursos del frontend | ✅ público | ✅ público |
+| Productos, bodegas, movimientos y usuarios: consultar, crear y actualizar | ✅ | ✅ |
+| **DELETE** de productos, bodegas y usuarios | ✅ | ❌ (403) |
+| **Auditoría** (`/auditorias/**`) | ✅ | ❌ (403) |
+ 
+## 📡 Endpoints
+ 
+Todos los endpoints (salvo `/auth/login`) requieren el header `Authorization: Bearer <token>`.
+ 
+### Autenticación
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| POST | `/auth/login` | Inicia sesión y devuelve el token JWT | Público |
+ 
+### Productos
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/productos` | Lista todos los productos | ADMIN, EMPLEADO |
+| GET | `/productos/{id}` | Consulta un producto por ID | ADMIN, EMPLEADO |
+| GET | `/productos/stock-bajo` | Productos con menos de 10 unidades | ADMIN, EMPLEADO |
+| POST | `/productos` | Crea un producto | ADMIN, EMPLEADO |
+| PUT | `/productos/{id}` | Actualiza un producto | ADMIN, EMPLEADO |
+| DELETE | `/productos/{id}` | Elimina un producto | ADMIN |
+ 
+### Bodegas
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/bodegas` | Lista todas las bodegas | ADMIN, EMPLEADO |
+| GET | `/bodegas/{id}` | Consulta una bodega por ID | ADMIN, EMPLEADO |
+| POST | `/bodegas` | Crea una bodega | ADMIN, EMPLEADO |
+| PUT | `/bodegas/{id}` | Actualiza una bodega | ADMIN, EMPLEADO |
+| DELETE | `/bodegas/{id}` | Elimina una bodega | ADMIN |
+ 
+### Movimientos
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/movimientos` | Lista todos los movimientos | ADMIN, EMPLEADO |
+| GET | `/movimientos/{id}` | Consulta un movimiento por ID | ADMIN, EMPLEADO |
+| POST | `/movimientos` | Registra un movimiento (usuario y fecha automáticos) | ADMIN, EMPLEADO |
+| DELETE | `/movimientos/{id}` | Elimina un movimiento | ADMIN, EMPLEADO |
+ 
+### Usuarios
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/usuarios` | Lista todos los usuarios | ADMIN, EMPLEADO |
+| GET | `/usuarios/{id}` | Consulta un usuario por ID | ADMIN, EMPLEADO |
+| POST | `/usuarios` | Crea un usuario (la contraseña se cifra) | ADMIN, EMPLEADO |
+| PUT | `/usuarios/{id}` | Actualiza un usuario | ADMIN, EMPLEADO |
+| DELETE | `/usuarios/{id}` | Elimina un usuario | ADMIN |
+ 
+### Auditoría
+ 
+| Método | Ruta | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/auditorias` | Lista el historial de operaciones | ADMIN |
+| GET | `/auditorias/{id}` | Consulta un registro de auditoría | ADMIN |
+ 
+## 🧪 Ejemplos de uso
+ 
+**Login** — `POST /auth/login`
+ 
+```json
+{
+  "correo": "admin@logitrack.com",
+  "password": "12345"
+}
 ```
  
-### Crear una bodega
+Respuesta `200`:
  
-```bash
-curl -X POST http://localhost:8080/bodegas \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "nombre": "Bodega Norte",
-        "ubicacion": "Av. Principal 100, Quito",
-        "capacidad": 2000,
-        "encargado": "Pedro Salazar"
-      }'
+```json
+{ "token": "eyJhbGciOiJIUzUxMiJ9..." }
 ```
  
-### Registrar un movimiento
+**Crear un producto** — `POST /productos`
  
-El **usuario responsable** y la **fecha** se asignan automáticamente a partir del token; no es necesario enviarlos.
+```json
+{
+  "nombre": "Webcam HD",
+  "categoria": "Tecnología",
+  "stock": 20,
+  "precio": 59.90
+}
+```
  
-**Entrada** (llega mercancía a una bodega):
+**Registrar una entrada** — `POST /movimientos`
  
 ```json
 {
   "tipo": "ENTRADA",
-  "cantidad": 30,
+  "cantidad": 10,
   "producto": { "id": 1 },
   "bodegaDestino": { "id": 1 }
 }
 ```
  
-**Salida** (sale mercancía de una bodega):
+**Registrar una salida** — `POST /movimientos`
  
 ```json
 {
@@ -335,7 +407,7 @@ El **usuario responsable** y la **fecha** se asignan automáticamente a partir d
 }
 ```
  
-**Transferencia** (entre dos bodegas):
+**Registrar una transferencia** — `POST /movimientos`
  
 ```json
 {
@@ -347,158 +419,112 @@ El **usuario responsable** y la **fecha** se asignan automáticamente a partir d
 }
 ```
  
-Reglas de stock:
-- `ENTRADA` suma la cantidad al stock del producto.
-- `SALIDA` resta la cantidad; si no hay stock suficiente, se rechaza con error 400.
-- `TRANSFERENCIA` no altera el stock total del producto.
-### Consultar productos con stock bajo
+> No envíes `fecha` ni `usuario`: el servidor los asigna automáticamente (fecha actual y usuario del token).
  
-```bash
-curl http://localhost:8080/productos/stock-bajo \
-  -H "Authorization: Bearer <token>"
-```
+**Productos con stock bajo** — `GET /productos/stock-bajo`
  
-### Consultar auditorías (solo ADMIN)
+Devuelve los productos con menos de 10 unidades (con los datos de prueba: Escritorio de Oficina, Mouse Inalámbrico y Lámpara LED).
  
-```bash
-curl http://localhost:8080/auditorias \
-  -H "Authorization: Bearer <token>"
-```
+## 📏 Reglas de negocio
  
-Ejemplo de registro:
+- **ENTRADA:** suma la cantidad al stock del producto.
+- **SALIDA:** resta la cantidad al stock. Si no hay suficiente, responde con error `400` indicando el stock actual.
+- **TRANSFERENCIA:** registra el movimiento entre bodegas sin modificar el stock global del producto.
+- El **usuario responsable** y la **fecha** de cada movimiento se asignan automáticamente desde el token JWT.
+- **Stock bajo:** se considera bajo cuando hay menos de 10 unidades.
+- **Validaciones:** stock y precio no pueden ser negativos; la cantidad de un movimiento debe ser al menos 1; el correo debe tener formato válido; la contraseña debe tener entre 5 y 100 caracteres; el nombre de usuario (entre 3 y 50 caracteres), el correo y el nombre del producto son únicos.
+## 🛡 Auditoría
  
-```json
-{
-  "id": 1,
-  "tipoOperacion": "UPDATE",
-  "fecha": "2026-11-19T10:25:43",
-  "entidadAfectada": "Producto",
-  "idRegistroAfectado": 3,
-  "valoresAnteriores": null,
-  "valoresNuevos": null,
-  "nombreUsuario": "admin1"
-}
-```
+La auditoría es **automática**: la entidad `Producto` está registrada con `@EntityListeners(AuditoriaListener.class)`, y el listener de JPA reacciona a los eventos `@PostPersist`, `@PostUpdate` y `@PreRemove`.
  
----
+Cada operación genera un registro con:
  
-## Manejo de errores
+| Campo | Contenido |
+|---|---|
+| `tipoOperacion` | `INSERT`, `UPDATE` o `DELETE` |
+| `fecha` | Fecha y hora de la operación |
+| `entidadAfectada` | Nombre de la entidad (por ejemplo `Producto`) |
+| `idRegistroAfectado` | ID del registro modificado |
+| `nombreUsuario` | Usuario autenticado que realizó la acción (o `SYSTEM` si no hay sesión) |
  
-El backend centraliza los errores en `ManejadorGlobalDeExcepciones` (`@RestControllerAdvice`) y responde siempre en JSON.
+Los registros se consultan con `GET /auditorias` (solo ADMIN) y se muestran en el módulo **Auditoría** del frontend.
  
-| Código | Situación | Ejemplo de respuesta |
-|--------|-----------|----------------------|
-| 400 | Error de negocio, validación o JSON mal formado | `{"status":400,"error":"Error de Negocio","message":"No hay suficiente stock. Stock actual: 5", ...}` |
-| 401 | Token ausente, inválido o expirado / credenciales incorrectas | `{"error":"Contraseña incorrecta"}` |
-| 403 | El rol no tiene permiso para el recurso | — |
-| 404 | Recurso no encontrado | `{"status":404,"error":"Recurso No Encontrado","message":"Producto no encontrado con ID: 99", ...}` |
-| 500 | Error interno inesperado | `{"status":500,"error":"Error Interno del Servidor", ...}` |
+## ⚠️ Manejo de errores
  
-Estructura de `ErrorResponse`:
+`ManejadorGlobalDeExcepciones` (`@ControllerAdvice`) convierte las excepciones en respuestas JSON uniformes:
  
 ```json
 {
-  "timestamp": "2026-11-19T10:30:00",
+  "timestamp": "2026-11-19T19:03:45.123",
   "status": 404,
-  "error": "Recurso No Encontrado",
+  "error": "Not Found",
   "message": "Producto no encontrado con ID: 99",
   "path": "/productos/99"
 }
 ```
  
-Validaciones principales de las entidades:
+| Código | Cuándo ocurre |
+|---|---|
+| `400` | Datos inválidos, JSON mal formado, stock insuficiente u otra regla de negocio incumplida |
+| `401` | Token ausente, inválido o expirado; credenciales incorrectas en el login |
+| `403` | El rol del usuario no tiene permiso para el recurso |
+| `404` | El recurso solicitado no existe |
+| `500` | Error interno inesperado |
  
-| Entidad | Campo | Regla |
-|---------|-------|-------|
-| Producto | `stock` | Mínimo 0 |
-| Producto | `precio` | Mínimo 0.0 |
-| Producto | `nombre` | Único |
-| Movimiento | `cantidad` | Obligatoria, mínimo 1 |
-| Movimiento | `tipo` | Obligatorio (`ENTRADA`, `SALIDA`, `TRANSFERENCIA`) |
-| Usuario | `nombre` | Obligatorio, entre 3 y 50 caracteres |
-| Usuario | `correo` | Obligatorio, formato de correo válido |
-| Usuario | `password` | Obligatoria, entre 5 y 100 caracteres |
+## 📖 Documentación Swagger y pruebas
  
----
- 
-## Auditoría automática
- 
-La auditoría se implementa con un **JPA Entity Listener** (`AuditoriaListener`) que intercepta los eventos del ciclo de vida de la entidad:
- 
-| Evento JPA | Operación registrada |
-|------------|----------------------|
-| `@PostPersist` | `INSERT` |
-| `@PostUpdate` | `UPDATE` |
-| `@PreRemove` | `DELETE` |
- 
-Por cada evento se guarda en la tabla `auditoria`: tipo de operación, fecha y hora, nombre del usuario (tomado del token JWT; `SYSTEM` si no hay sesión), entidad afectada e ID del registro. El nombre de usuario se guarda como texto para conservar el historial aunque el usuario sea eliminado después.
- 
-Actualmente el listener está activo sobre la entidad **`Producto`**.
- 
----
- 
-## Documentación Swagger
- 
-Con el backend en ejecución:
+La API está documentada con **OpenAPI 3** (springdoc). Los endpoints aparecen agrupados por módulo (Autenticación, Productos, Bodegas, Movimientos, Usuarios y Auditoría) y cada uno incluye resumen, parámetros con ejemplo, cuerpos de petición listos para ejecutar y la tabla de respuestas posibles.
  
 - **Swagger UI:** http://localhost:8080/swagger-ui/index.html
-- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
-### Probar endpoints protegidos desde Swagger
+### Cómo probar un endpoint protegido
  
-1. Ejecuta `POST /auth/login` y copia el valor de `token` de la respuesta.
-2. Pulsa el botón **Authorize** 🔓 (arriba a la derecha).
-3. Pega el token (sin la palabra `Bearer`) y confirma con **Authorize**.
-4. Ya puedes ejecutar cualquier endpoint protegido con **Try it out**.
+1. Abre Swagger UI.
+2. En `POST /auth/login`, pulsa **Try it out** y **Execute** con las credenciales de ejemplo.
+3. Copia el valor de `token` de la respuesta.
+4. Pulsa **Authorize** (arriba a la derecha), pega el token y confirma.
+5. Prueba cualquier endpoint protegido, por ejemplo `GET /productos/stock-bajo`.
+6. Para verificar los permisos, inicia sesión como `empleado@logitrack.com` e intenta un `DELETE`: debe responder `403`.
+### Capturas
+ 
+| Swagger UI | Login y token | Endpoint protegido con token |
+|---|---|---|
+| ![Swagger UI](docs/img/swagger-ui.png) | ![Login](docs/img/swagger-login.png) | ![Prueba con JWT](docs/img/swagger-jwt.png) |
+ 
+> Las imágenes van en la carpeta `docs/img/` del repositorio.
+ 
+## 🖥 Frontend
+ 
+Aplicación web básica en HTML, CSS y JavaScript, ubicada en `Backend/logitrack/src/main/resources/static/`. **Spring Boot la sirve directamente**, por lo que no se necesita un servidor aparte: basta con iniciar el backend y abrir http://localhost:8080/login.html.
+ 
+| Módulo | Descripción |
+|---|---|
+| **Login** | Autentica contra `/auth/login`; guarda el token y el rol en `localStorage`. |
+| **Dashboard** | Total de productos, bodegas, productos con stock bajo, movimientos totales y últimos movimientos. |
+| **Productos** | Listado y gestión de productos. |
+| **Bodegas** | Listado y gestión de bodegas. |
+| **Movimientos** | Registro e historial de entradas, salidas y transferencias. |
+| **Auditoría** | Historial de cambios (solo visible para ADMIN). |
+ 
+`js/api.js` centraliza las peticiones: añade el token a cada llamada, redirige al login si recibe un `401` y muestra un mensaje claro ante un `403`. `js/config.js` usa el mismo origen de la página como URL de la API, así funciona en `localhost` y a través de un túnel. El diseño es **responsive**: en pantallas pequeñas el menú lateral se abre con el botón ☰.
+ 
+## 📱 Usarlo desde el celular
+ 
+Para abrir la aplicación desde el celular, incluso fuera de tu red, se puede publicar con un túnel de **Cloudflare** (gratuito, sin cuenta):
+ 
+1. Instala cloudflared: `winget install --id Cloudflare.cloudflared --source winget`
+2. Inicia el backend (puerto 8080).
+3. En otra terminal ejecuta: `cloudflared tunnel --url http://localhost:8080`
+4. Copia la URL `https://....trycloudflare.com` que aparece y ábrela en el celular agregando `/login.html`.
+La URL cambia cada vez que se reinicia el túnel, y el PC debe permanecer encendido con el backend en ejecución. Como la URL es pública, compártela solo con quien la necesite y cierra el túnel al terminar.
+ 
+## 🔎 Limitaciones conocidas
+ 
+- La **auditoría** se registra únicamente para la entidad `Producto`, y por ahora no guarda los valores anteriores y nuevos (`valoresAnteriores` y `valoresNuevos` quedan vacíos).
+- El stock es **global por producto**: una transferencia registra el movimiento entre bodegas pero no mantiene stock separado por bodega.
+- La **clave secreta del JWT** y las credenciales de MySQL están en el código para facilitar el desarrollo; en un entorno real deben moverse a variables de entorno.
+- **CORS** está abierto a cualquier origen (`*`) para desarrollo; debe restringirse en producción.
+- `schema.sql` reinicia la base de datos en cada arranque.
 ---
  
-## Frontend
- 
-Aplicación web en `Frontend/` que consume la API REST.
- 
-| Archivo | Función |
-|---------|---------|
-| `login.html` | Pantalla de inicio de sesión |
-| `index.html` | Aplicación principal (dashboard, productos, bodegas, movimientos, auditoría) |
-| `js/config.js` | URL de la API y claves de `localStorage` |
-| `js/api.js` | Función `apiRequest` que agrega el token JWT y gestiona los errores 401 / 403 |
-| `js/auth.js` | Login, logout, decodificación del JWT y protección de rutas |
-| `js/dashboard.js` | Indicadores y últimos movimientos |
-| `js/productos.js` | CRUD de productos |
-| `js/bodegas.js` | CRUD de bodegas |
-| `js/movimientos.js` | Historial y registro de movimientos |
-| `js/auditoria.js` | Consulta del registro de auditoría |
- 
-Comportamiento destacado:
- 
-- El token, el rol y el nombre de usuario se guardan en `localStorage`.
-- Si el token expira (401), la sesión se cierra y se redirige al login.
-- Los botones de editar y eliminar solo se muestran a usuarios **ADMIN**; los empleados ven los listados en modo lectura.
-- El formulario de movimientos muestra los campos de bodega de origen y destino según el tipo de movimiento seleccionado.
----
- 
-## Base de datos
- 
-Motor: **MySQL 8** · Base: `logitrack_db`
- 
-| Tabla | Descripción |
-|-------|-------------|
-| `usuario` | Usuarios del sistema (nombre, correo, contraseña cifrada, rol) |
-| `producto` | Catálogo de productos (nombre, categoría, stock, precio) |
-| `bodega` | Bodegas (nombre, ubicación, capacidad, encargado) |
-| `movimiento` | Movimientos de inventario (fecha, tipo, cantidad, usuario, producto, bodega origen y destino) |
-| `auditoria` | Registro de operaciones (tipo, fecha, entidad, ID del registro, valores, usuario) |
- 
-Relaciones principales:
- 
-- `movimiento.usuario_id` → `usuario.id`
-- `movimiento.producto_id` → `producto.id`
-- `movimiento.bodega_origen_id` → `bodega.id`
-- `movimiento.bodega_destino_id` → `bodega.id`
-Datos iniciales (`data.sql`): 3 usuarios, 3 bodegas (Quito, Medellín y Loja) y 8 productos de ejemplo.
- 
----
- 
-## Licencia
- 
-Proyecto académico — uso educativo.
+Proyecto desarrollado por el **Equipo LogiTrack**.
  
