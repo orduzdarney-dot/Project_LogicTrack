@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.logitrack.dto.MovimientoDto;
+import com.example.logitrack.repository.MovimientoRepository;
 
 import java.util.List;
 
@@ -22,6 +24,8 @@ public class MovimientoController {
 
     @Autowired
     private MovimientoService service;
+    @Autowired
+    private MovimientoRepository repository;
 
     @Operation(summary = "Listar todos los movimientos")
     @ApiResponses({
@@ -39,6 +43,15 @@ public class MovimientoController {
             @ApiResponse(responseCode = "401", description = "Token ausente o inválido"),
             @ApiResponse(responseCode = "404", description = "No existe un movimiento con ese ID")
     })
+    @GetMapping("/recientes")
+    public ResponseEntity<List<MovimientoDto>>listarRecientes(){
+        List<MovimientoDto> recientes = repository.findTop10ByOrderByFechaDescIdDesc()
+                .stream()
+                .map(MovimientoDto::new)
+                .toList();
+        return ResponseEntity.ok(recientes);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Movimiento> obtenerPorId(
             @Parameter(description = "ID del movimiento", example = "1") @PathVariable Long id) {
