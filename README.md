@@ -528,3 +528,5 @@ La URL cambia cada vez que se reinicia el túnel, y el PC debe permanecer encend
  
 Proyecto desarrollado por el **Equipo LogiTrack**.
  
+<img width="1595" height="822" alt="Captura de pantalla 2026-11-26 113452" src="https://github.com/user-attachments/assets/f6ac6f2c-aea6-472e-8035-15a6e0cc2dfd" />
+<img width="1587" height="877" alt="Captura de pantalla 2026-11-26 113409" src="https://github.com/user-attachments/assets/1b192b76-47e0-4888-b4c1-6232af2bfe2a" />
